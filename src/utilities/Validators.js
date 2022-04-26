@@ -3,6 +3,7 @@
 const assert = require('assert').strict;
 const validator = require('validator');
 const personalNumber = require('swedish-personal-identity-number-validator');
+const phoneValidator = require('phone');
 
 /**
  * A class with validation methods. This class contains validation methods
@@ -201,6 +202,20 @@ class Validators {
         assert(
             result,
             `${varName} should be a non negative number.`,
+        );
+    }
+
+    static isValidMobileNumber(value, varName) {
+        
+        let result = false;
+        const validation = phoneValidator.phone(value, {validateMobilePrefix: false, country: 'SWE'});
+        if(validation.isValid === true) {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} The phone number is not a valid swedish mobile number.`,
         );
     }
 

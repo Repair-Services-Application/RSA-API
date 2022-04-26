@@ -43,9 +43,10 @@ app.get('/', (req, res, next) => {
 })
 
 const requestHandlerLoader = require('./apis/ReqHandlerLoader');
-console.log('requestHandlerLoader');
 requestHandlerLoader.loadAllRequestsHandlers(app);
 requestHandlerLoader.loadAllErrorsHandlers(app);
+
+
 
 
 const server = app.listen(

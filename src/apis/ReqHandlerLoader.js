@@ -44,7 +44,6 @@ class RequestHandlerLoader {
         this.reqHandlersList.forEach(reqHandler => {
             reqHandler.registerHandler();
             application.use(reqHandler.path, reqHandler.reqRouter);
-           // console.log('while loop.');
         });
     }
 
