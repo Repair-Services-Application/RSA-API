@@ -134,6 +134,46 @@ class UserApiHandler extends ReqHandler {
 
             );
 
+            this.reqRouter.get(
+                '/checkLogin',
+                async(request, response, next) => {
+                    try {
+                        const userDTO = await Authorization.verifyRequestAuthCookie(request, response);
+                        if(userDTO === null) {
+                            Authorization.clearAuthCookie(response);
+                            this.sendHTTPResponse(response, 401, 'Invalid Authorization Cookies');
+                            return;
+                        }
+                        else{
+                            this.sendHTTPResponse(response, 200, userDTO);
+                            return;
+                        }
+
+
+                    } catch (error) {
+                        next(error);
+                    }
+                },
+            );
+
+
+            this.reqRouter.get(
+                '/logout',
+                async(request, response, next) => {
+                    try {
+                        
+                        Authorization.clearAuthCookie(response);
+                        this.sendHTTPResponse(response, 200, 'Logged out Successfully.');
+                        return;
+
+
+                    } catch (error) {
+                        next(error);
+                    }
+                }
+            )
+
+
 
         } catch (error) {
             
