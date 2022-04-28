@@ -143,25 +143,32 @@ class Validators {
     }
 
     /**
-     * Check if the value is a valid category, Category is an object {id, type}
+     * Check if the value is a valid category, Category is an object {id, type, parentCategoryId}
      * @param {any} value The value to be validated.
      * @param {String} varName  The passed variable name to be asserted along in the assertion error message
      *                         in case that the validation doesn't success.
      * @throws {AssertionError} If validation fails.
      */
     static isCategory(value, varName) {
-        let result = validator.isInt(value.id.toString(), {min: 1});
+        let result = validator.isInt(value.category_id.toString(), {min: 1});
 
         assert(
             result,
             `${varName} ID should be a positive whole number.`,
         );
 
-        result = validator.isAlpha(value.type.toString(), ['sv-SE'], {ignore: ' '});
+        result = validator.isAlpha(value.description.toString(), ['sv-SE'], {ignore: ' '});
 
         assert(
             result,
             `${varName} type should consist of letters that could be separated by spaces.`,
+        );
+
+        result = validator.isInt(value.parent_category_id.toString(), {min: 0});
+
+        assert(
+            result,
+            `${varName} ID should be higher than Zero.`,
         );
     }
 
@@ -236,7 +243,25 @@ class Validators {
     }
 
     /**
-     * Check if the value is an application object {id, firstName, lastName, categoryDescription, dateOfRegistration, statusDescription}.
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isNotEmpty(value, varName) {
+
+        let result = false;
+        if(value !== '') {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} cannot be empty.`,
+        );
+    }
+
+    /**
+     * Check if the value is an application object {id, firstName, lastName, categoryDescription, statusDescription}.
      * @param {any} value The value to be validated.
      * @param {String} varName  The passed variable name to be asserted along in the assertion error message
      *                         in case that the validation doesn't success.

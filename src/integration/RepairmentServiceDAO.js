@@ -2,11 +2,18 @@
 
 const pbkdf2 = require("pbkdf2");
 const { Client, types } = require("pg");
+const ApplicationRegistrationDTO = require("../DTOs/ApplicationRegistrationDTO");
+const CategoryDTO = require("../DTOs/CategoryDTO");
 const UserDTO = require("../DTOs/UserDTO");
 const repairmentServiceSystemRoles = require('../utilities/rolesEnum');
 const userErrorCodesEnum = require('../utilities/userErrorCodesEnum');
+const applicationRegistrationErrorEnum = require('../utilities/applicationRegistrationErrorEnum');
 
 class RepairmentServiceDAO {
+    
+    /**
+     * 
+     */
     constructor() {
 
         const idOfDateObject = 1082;
@@ -30,6 +37,9 @@ class RepairmentServiceDAO {
         this.pageLimit = 30;
     }
 
+    /**
+     * 
+     */
     async establishTheConnection() {
         try {
             this.client.on('error', (error) => {
@@ -47,6 +57,12 @@ class RepairmentServiceDAO {
         
     }
 
+    /**
+     * 
+     * @param {*} username 
+     * @param {*} password 
+     * @returns 
+     */
     async loginUser(username, password) {
         const hashedPass = await this._generateHashedPassword(username, password);
         const loginQueryContent = {
@@ -85,11 +101,15 @@ class RepairmentServiceDAO {
 
         } catch (error) {
             //this.logger.logException(error);
-            console.log('catch');
             return null;
         }
     }
 
+    /**
+     * 
+     * @param {*} signupDTO 
+     * @returns 
+     */
     async signupUser(signupDTO) {
         const hashedPass = await this._generateHashedPassword(signupDTO.username, signupDTO.password);
         const emailCheckQueryContent = {
@@ -149,9 +169,6 @@ class RepairmentServiceDAO {
 
             let returnedUserDTO;
 
-            console.log('emailChecking: ' + emailChecking.rowCount);
-            console.log('usernameChecking: ' + usernameChecking.rowCount);
-            console.log('personalNumberChecking: ' + personalNumberChecking.rowCount);
 
             if (emailChecking.rowCount > 0) {
                 returnedUserDTO = new UserDTO(signupDTO.username, repairmentServiceSystemRoles.Invalid, userErrorCodesEnum.EmailAlreadyInUse);
@@ -163,7 +180,6 @@ class RepairmentServiceDAO {
                 returnedUserDTO = new UserDTO(signupDTO.username, repairmentServiceSystemRoles.Invalid, userErrorCodesEnum.PersonalNumberAlreadyInUse);
             }
             else {
-                console.log('else, everything ok: ' );
                 await this._runQuery(registerNewUserQueryContent);
                 returnedUserDTO = new UserDTO(signupDTO.username, repairmentServiceSystemRoles.User, userErrorCodesEnum.OK);
             }
@@ -175,13 +191,146 @@ class RepairmentServiceDAO {
 
 
         } catch (error) {
-            console.log('error: ' + error);
             //this.logger.logException(error);
             return null;
         }
         
     }
 
+    /**
+     * 
+     */
+    async getCategories() {
+        let rootCateogry = 0;
+        
+        const getCategoriesQuery = {
+            text: ` SELECT  category_relation.category_id,
+                            category.description,
+                            category_relation.parent_category_id
+                    FROM    public.category_relation category_relation
+                            INNER JOIN public.category category ON (category_relation.category_id = category.id)
+                    WHERE   parent_category_id = $1`,
+            values: [rootCateogry],
+        };
+
+        try {
+            let returnedList = [];
+            const clientConnection = this._checkClientConnection();
+
+            if(clientConnection === null) {
+                return null;
+            }
+
+            await this._runQuery('BEGIN');
+            const categoriesResult = await this._runQuery(getCategoriesQuery);
+            if(categoriesResult.rowCount <= 0) {
+                returnedList = [];
+            }
+            else{
+                for (let i = 0; i < categoriesResult.rowCount; i++) {
+
+                    const currentCategory = new CategoryDTO(categoriesResult.rows[i].category_id, 
+                        categoriesResult.rows[i].description, categoriesResult.rows[i].parent_category_id);
+
+                    returnedList[i] = currentCategory;
+                    }
+            }
+
+            await this._runQuery('COMMIT');
+
+            return returnedList;
+            
+
+        } catch (error) {
+            this.logger.logException(error);
+            return null;
+        }
+    }
+
+    async registerNewApplication(userDTO, applicationDTO) {
+
+        const categoryCheckQuery = {
+            text: `SELECT 	* 
+            FROM 	public.category_relation
+            WHERE 	category_id = $1`,
+            values: [applicationDTO.categoryRelationId],
+        };
+
+        const applicationDuplicateCheck = {
+            text: `SELECT     id
+            FROM     public.application
+            WHERE    problem_description = $1 and
+                     category_relation_id = $2 and 
+					 person_id = (SELECT  person_id
+                                        FROM    public.login_info
+                                        WHERE   username = $3)`,
+            values: [applicationDTO.problemDescription, applicationDTO.categoryRelationId, applicationDTO.username],
+        };
+
+        const newApplicationQuery = {
+            text: `INSERT INTO public.application(
+                                        date_of_registration,
+                                        problem_description,
+                                        category_relation_id,
+                                        person_id)
+                VALUES                  (NOW()::timestamp,
+                                        $1,
+                                        $2,
+                                        (SELECT  person_id
+                                        FROM    public.login_info
+                                        WHERE   username = $3)) RETURNING id`,
+            values: [applicationDTO.problemDescription, applicationDTO.categoryRelationId, applicationDTO.username],
+        };
+
+        
+
+        try {
+            
+            const connectionCheck = this._checkClientConnection();
+
+            let applicationRegistrationDTO;
+            let errorChecker = false;
+            if(!connectionCheck) {
+                return null;
+            }
+
+            if(userDTO.roleID === null || userDTO.roleID !== repairmentServiceSystemRoles.User) {
+                applicationRegistrationDTO = new ApplicationRegistrationDTO(0, applicationRegistrationErrorEnum.InvalidRole);
+                errorChecker = true;
+            }
+
+            await this._runQuery('BEGIN');
+            const categoryCheckQueryResult = await this._runQuery(categoryCheckQuery);
+            const applicationDuplicateCheckResult = await this._runQuery(applicationDuplicateCheck);
+
+            if(applicationDuplicateCheckResult.rowCount > 0) {
+                applicationRegistrationDTO = new ApplicationRegistrationDTO(applicationDuplicateCheckResult.rows[0].id, 
+                    applicationRegistrationErrorEnum.AlreadyExistApplication);
+                errorChecker = true;
+            }
+            if(categoryCheckQueryResult.rowCount <= 0) {
+                console.log('!(categoryCheckQueryResult.rowCount > 0)');
+                applicationRegistrationDTO = new ApplicationRegistrationDTO(0, applicationRegistrationErrorEnum.InvalidCategoryId);
+                errorChecker = true;
+            }
+            if(errorChecker === false) {
+                const newApplicationResult = await this._runQuery(newApplicationQuery);
+                const recentlySubmitedApplicationId = newApplicationResult.rows[0].id;
+                applicationRegistrationDTO = new ApplicationRegistrationDTO(recentlySubmitedApplicationId, applicationRegistrationErrorEnum.OK);
+            }
+            console.log(applicationRegistrationDTO);
+            await this._runQuery('COMMIT');
+
+            
+
+            return applicationRegistrationDTO;
+
+
+        } catch (error) {
+            //this.logger.logException(error);
+            return null;
+        }
+    }
 
 
 
@@ -198,6 +347,14 @@ class RepairmentServiceDAO {
             throw error;
         }
     }
+
+   
+
+    // async _getPersonId(username) {
+    //    const getPersonIdQuery = {
+    //        text: ``
+    //    }
+    // }
 
     async _generateHashedPassword(username, password) {
         const defaultSalt = process.env.GLOBAL_SALT;

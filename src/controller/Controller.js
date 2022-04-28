@@ -1,5 +1,6 @@
 'use strict';
 
+const ApplicationDTO = require('../DTOs/ApplicationDTO');
 const SignupDTO = require('../DTOs/SignupDTO');
 const RepairmentServiceDAO = require('../integration/RepairmentServiceDAO');
 
@@ -24,8 +25,18 @@ class Controller {
     async signupUser(firstname, lastname, personalNumber, email, username, password, mobileNumber) {
         const signupDTO = new SignupDTO(firstname, lastname, personalNumber, email, username, password, mobileNumber);
         const userDTO = this.repairmentServiceDAO.signupUser(signupDTO);
-        console.log('userDTO: ' + userDTO);
         return userDTO;
+    }
+
+    async getCategories() {
+        const categoriesList = this.repairmentServiceDAO.getCategories();
+        return categoriesList;
+    }
+
+    async registerApplication(userDTO, categoryRelationId, problemDescription) {
+        const applicationDTO = new ApplicationDTO(userDTO.username, categoryRelationId, problemDescription);
+        const applicationRegistrationDTO = await this.repairmentServiceDAO.registerNewApplication(userDTO, applicationDTO);
+        return applicationRegistrationDTO;
     }
 }
 

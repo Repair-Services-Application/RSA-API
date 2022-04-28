@@ -1,7 +1,6 @@
 'use strict';
 
 const { check, validationResult } = require("express-validator");
-const {phone} = require('phone')
 const ReqHandler = require("./ReqHandler");
 const Authorization = require('./authorization/Authorization');
 const userErrorCodesEnum = require("../utilities/userErrorCodesEnum");
@@ -82,7 +81,6 @@ class UserApiHandler extends ReqHandler {
                     Validators.isValidMobileNumber(value, 'mobileNumber');
                     return true;
                 }),
-                //console.log('mobileNumber'),
                 async (request, response, next) => {
                     try {    
                         
@@ -97,7 +95,6 @@ class UserApiHandler extends ReqHandler {
                         const newSignedupUserDTO = await this.controller.signupUser(request.body.firstname, request.body.lastname, 
                             request.body.personalNumber, request.body.email, request.body.username, request.body.password, request.body.mobileNumber);
 
-                            console.log('newSignedupUserDTO: '+ newSignedupUserDTO);
                         if(newSignedupUserDTO === null) {
                             Authorization.clearAuthCookie(response);
                             throw new Error('Expected UserDTO object, received null');
@@ -176,7 +173,7 @@ class UserApiHandler extends ReqHandler {
 
 
         } catch (error) {
-            
+            this.logeed.logException(errro);
         }
     }
 }
