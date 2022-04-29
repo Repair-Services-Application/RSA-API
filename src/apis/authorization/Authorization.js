@@ -9,6 +9,12 @@ class Authorization {
         return 'repairmentServiceAuth';
     }
 
+    /**
+     * 
+     * @param {*} request 
+     * @param {*} response 
+     * @returns 
+     */
     static async verifyRequestAuthCookie(request, response) {
         const authenticationCookie = request.cookies.repairmentServiceAuth;
         if (!authenticationCookie) {
@@ -27,6 +33,11 @@ class Authorization {
         }
     }
 
+    /**
+     * 
+     * @param {*} request 
+     * @returns 
+     */
     static async verifyUserAuth(request) {
         const authorizationCookie = request.cookies.repairmentServiceAuth;
         if(!authorizationCookie) {
@@ -47,6 +58,11 @@ class Authorization {
         }
     }
 
+    /**
+     * 
+     * @param {*} request 
+     * @returns 
+     */
     static async verifyWorkerAuth(request) {
         const authorizationCookie = request.cookies.repairmentServiceAuth;
         if(!authorizationCookie) {
@@ -67,6 +83,11 @@ class Authorization {
         }
     }
 
+    /**
+     * 
+     * @param {*} request 
+     * @returns 
+     */
     static async verifyAdministratorAuth(request) {
         const authorizationCookie = request.cookies.repairmentServiceAuth;
         if(!authorizationCookie) {
@@ -87,9 +108,38 @@ class Authorization {
         }
     }
 
+    /**
+     * 
+     * @param {*} request 
+     * @returns 
+     */
+    static async verifyWorkerAdminAuth(request) {
+        const authorizationCookie = request.cookies.repairmentServiceAuth;
+        if(!authorizationCookie) {
+            return null;
+        }
+        try {
+            const userDTOPayload = jwt.verify(authorizationCookie, process.env.JWT_SECRET);
+            const userDTO = userDTOPayload.userDTO;
+            if(userDTO.roleID === repairmentServiceSystemRoles.Worker || userDTO.roleID === repairmentServiceSystemRoles.Administrator) {
+                return userDTO;
+            }
+            else{
+                return null;
+            }
+
+        } catch (error) {
+            return null;
+        }
+    }
 
 
 
+    /**
+     * 
+     * @param {*} userDTO 
+     * @param {*} response 
+     */
     static setAuthCookie(userDTO, response) {
         const httpOnlyCookie = {httpOnly: true};
         const cookieAge = {maxAge: 7 * 86400 * 1000} // 1 week
@@ -111,6 +161,10 @@ class Authorization {
     }
 
 
+    /**
+     * 
+     * @param {*} response 
+     */
     static clearAuthCookie(response) {
         const httpOnlyCookie = {httpOnly: true};
         const sameSite = {sameSite: 'None'};

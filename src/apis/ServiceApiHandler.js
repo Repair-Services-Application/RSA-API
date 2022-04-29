@@ -52,8 +52,8 @@ class ServiceApiHandler extends ReqHandler {
 
             this.reqRouter.post(
                 '/registerApplication', 
-                check('categoryRelationId').custom((value) => {
-                    Validators.isPositiveWholeNumber(value, 'categoryRelationId');
+                check('categoryId').custom((value) => {
+                    Validators.isPositiveWholeNumber(value, 'categoryId');
                     return true;
                 }),
                 check('problemDescription').custom((value) => {
@@ -78,7 +78,7 @@ class ServiceApiHandler extends ReqHandler {
                         }
                         else{
                             const applicationRegistrationDTO = await this.controller.registerApplication(userDTO, 
-                                request.body.categoryRelationId, request.body.problemDescription);
+                                request.body.categoryId, request.body.problemDescription);
                         
                             if(applicationRegistrationDTO === null) {
                                 throw new Error('Expected ApplicationRegistrationDTO object, received null.');
@@ -106,6 +106,100 @@ class ServiceApiHandler extends ReqHandler {
                         next(error);
                     }
                 }
+            )
+
+            this.reqRouter.get(
+                '/getApplicationsByWorker',
+                check('applicationId').custom((value) => {
+                    Validators.isNonNegativeWholeNumber(value, 'applicationId');
+                    return true;
+                }),
+                check('categoryId').custom((value) => {
+                    Validators.isNonNegativeWholeNumber(value, 'categoryId');
+                    return true;
+                }),
+                check('firstname').custom((value) => {
+                    // Allow empty first name.
+                    if (value === '') {
+                        return true;
+                    }
+                    // This will throw an AssertionError if the validation fails
+                    Validators.isAlphaString(value, 'Firstname');
+                    // Indicates the success of the custom validator check
+                    return true;
+                }),
+                check('lastname').custom((value) => {
+                    // Allow empty last name.
+                    if (value === '') {
+                        return true;
+                    }
+                    // This will throw an AssertionError if the validation fails
+                    Validators.isAlphaString(value, 'Lastname');
+                    // Indicates the success of the custom validator check
+                    return true;
+                }),
+                check('dateOfRegistrationFrom').custom((value) => {
+                    if (value === '') {
+                        return true;
+                    }
+                    Validators.isDateFormat(value, 'Date of registration from');
+                    return true;
+                }),
+                check('dateOfRegistrationTo').custom((value) => {
+                    if (value === '') {
+                        return true;
+                    }
+                    Validators.isDateFormat(value, 'Date of registration to');
+                    return true;
+                }),
+                check('suggestedPriceFrom').custom((value) => {
+                    Validators.isNonNegativeNumber(value, 'Suggested price from');
+                    return true;
+                }),
+                check('suggestedPriceTo').custom((value) => {
+                    Validators.isNonNegativeNumber(value, 'Suggested price to');
+                    return true;
+                }),
+                check('reparationStatusId').custom((value) => {
+                    Validators.isNonNegativeNumber(value, 'Reparation Status Id');
+                    return true;
+                }),
+                async (request, response, next) => {
+                    try {
+                        
+                        const errorsOfValidationCheck = validationResult(request);
+
+                        if(!errorsOfValidationCheck.isEmpty()) {
+                            this.sendHTTPResponse(response, 400, errorsOfValidationCheck);
+                            return;
+                        }
+
+                        const workerAdminDTO = await Authorization.verifyWorkerAdminAuth(request);
+
+                        if(workerAdminDTO === null) {
+                            this.sendHTTPResponse(response, 401, 'Invalid authorization cookie.');
+                            return;
+                        }
+                        else {
+                            const ApplicationsFilteredListDTO = await this.controller.getApplicationsByWorker(request.query.applicationId, 
+                                request.query.categoryId, request.query.firstname ,request.query.lastname , request.query.dateOfRegistrationFrom, 
+                                request.query.dateOfRegistrationTo, request.query.suggestedPriceFrom, request.query.suggestedPriceTo, 
+                                request.query.reparationStatusId);
+                            if(ApplicationsFilteredListDTO === null) {
+                                throw new Error('Expected ApplicationsFilteredListDTO object, received null.');
+                            }
+
+                            this.sendHTTPResponse(response, 200, ApplicationsFilteredListDTO);
+                        }
+
+                    } catch (error) {
+                        console.log(error);
+                        next(error);
+
+                    }
+                }
+
+
             )
 
 

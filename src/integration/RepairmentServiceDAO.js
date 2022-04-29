@@ -8,6 +8,8 @@ const UserDTO = require("../DTOs/UserDTO");
 const repairmentServiceSystemRoles = require('../utilities/rolesEnum');
 const userErrorCodesEnum = require('../utilities/userErrorCodesEnum');
 const applicationRegistrationErrorEnum = require('../utilities/applicationRegistrationErrorEnum');
+const filtersEmptyParameersEnum = require("../utilities/filtersEmptyParameersEnum");
+const ApplicationsFilteredListDTO = require("../DTOs/ApplicationsFilteredListDTO");
 
 class RepairmentServiceDAO {
     
@@ -253,7 +255,7 @@ class RepairmentServiceDAO {
             text: `SELECT 	* 
             FROM 	public.category_relation
             WHERE 	category_id = $1`,
-            values: [applicationDTO.categoryRelationId],
+            values: [applicationDTO.categoryId],
         };
 
         const applicationDuplicateCheck = {
@@ -264,7 +266,7 @@ class RepairmentServiceDAO {
 					 person_id = (SELECT  person_id
                                         FROM    public.login_info
                                         WHERE   username = $3)`,
-            values: [applicationDTO.problemDescription, applicationDTO.categoryRelationId, applicationDTO.username],
+            values: [applicationDTO.problemDescription, applicationDTO.categoryId, applicationDTO.username],
         };
 
         const newApplicationQuery = {
@@ -279,7 +281,7 @@ class RepairmentServiceDAO {
                                         (SELECT  person_id
                                         FROM    public.login_info
                                         WHERE   username = $3)) RETURNING id`,
-            values: [applicationDTO.problemDescription, applicationDTO.categoryRelationId, applicationDTO.username],
+            values: [applicationDTO.problemDescription, applicationDTO.categoryId, applicationDTO.username],
         };
 
         
@@ -309,7 +311,6 @@ class RepairmentServiceDAO {
                 errorChecker = true;
             }
             if(categoryCheckQueryResult.rowCount <= 0) {
-                console.log('!(categoryCheckQueryResult.rowCount > 0)');
                 applicationRegistrationDTO = new ApplicationRegistrationDTO(0, applicationRegistrationErrorEnum.InvalidCategoryId);
                 errorChecker = true;
             }
@@ -318,7 +319,6 @@ class RepairmentServiceDAO {
                 const recentlySubmitedApplicationId = newApplicationResult.rows[0].id;
                 applicationRegistrationDTO = new ApplicationRegistrationDTO(recentlySubmitedApplicationId, applicationRegistrationErrorEnum.OK);
             }
-            console.log(applicationRegistrationDTO);
             await this._runQuery('COMMIT');
 
             
@@ -328,19 +328,185 @@ class RepairmentServiceDAO {
 
         } catch (error) {
             //this.logger.logException(error);
+            console.log(error);
+            return null;
+        }
+    }
+
+
+    async getApplicationsListByWorker(applicationsFilterParamsDTO) {
+        try {
+            
+            const applicationsFilteringRes = await this._getFilteredApplicationsList(applicationsFilterParamsDTO);
+
+            if (applicationsFilteringRes.rowCount === 0) {
+                return new ApplicationsFilteredListDTO([]);
+            }
+            let returnedList;
+
+            let applicationList = [];
+
+            for (let i = 0; i < applicationsFilteringRes.rowCount; i++) {
+                applicationList[i] = {
+                    applicationId: applicationsFilteringRes.rows[i].applicationid,
+                    firstName: applicationsFilteringRes.rows[i].firstname,
+                    lastName: applicationsFilteringRes.rows[i].lastname,
+                    dateOfRegistration: applicationsFilteringRes.rows[i].dateofregistration,
+                    timeOfRegistration: applicationsFilteringRes.rows[i].timeofregistration,
+                };
+                
+            }
+            //returnedList = [...applicationList];
+            return new ApplicationsFilteredListDTO(applicationList);
+
+        } catch (error) {
+            //this.logger.logException();
+            console.log(error)
             return null;
         }
     }
 
 
 
+    async _getFilteredApplicationsList(applicationsFilterParamsDTO) {
+        try {
+            
+        
+            let applicationId = applicationsFilterParamsDTO.applicationId;
+            let categoryId = applicationsFilterParamsDTO.categoryId;
+            let firstname = applicationsFilterParamsDTO.firstname;
+            let lastname = applicationsFilterParamsDTO.lastname;
+            let dateOfRegistrationFrom = applicationsFilterParamsDTO.dateOfRegistrationFrom;
+            let dateOfRegistrationTo = applicationsFilterParamsDTO.dateOfRegistrationTo;
+            let suggestedPriceFrom = applicationsFilterParamsDTO.suggestedPriceFrom;
+            let suggestedPriceTo = applicationsFilterParamsDTO.suggestedPriceTo;
+            let reparationStatusId = applicationsFilterParamsDTO.reparationStatusId;
+
+            if( applicationId === filtersEmptyParameersEnum.ApplicationID) {
+                applicationId = -1;
+            }
+            if(categoryId === filtersEmptyParameersEnum.CategoryID) {
+                categoryId = -1;
+            }
+            if(firstname === filtersEmptyParameersEnum.Name) {
+                firstname = '';
+            }
+            if(lastname === filtersEmptyParameersEnum.Name) {
+                lastname = '';
+            }
+            if(suggestedPriceFrom === filtersEmptyParameersEnum.Price) {
+                suggestedPriceFrom = -1;
+            }
+            if(suggestedPriceTo === filtersEmptyParameersEnum.Price) {
+                suggestedPriceTo = -1;
+            }
+            if(reparationStatusId === filtersEmptyParameersEnum.ReparationStatusId) {
+                reparationStatusId = -1;
+            }
+
+            const filteringQueryContent = {
+                text: `SELECT
+                application.id as applicationId,
+                person.first_name as firstName,
+                person.last_name as lastName,
+                application.date_of_registration::DATE as dateOfRegistration, 
+                application.date_of_registration::TIME as timeOfRegistration
+              FROM
+                public.application
+                LEFT JOIN public.person ON (application.person_id = person.id)
+                LEFT JOIN public.login_info ON (person.id = login_info.person_id)
+                LEFT JOIN public.category_relation ON (application.category_relation_id = category_relation.id)
+                LEFT JOIN public.category ON (category_relation.category_id = category.id)
+                LEFT JOIN public.application_reparation_price ON (application.id = application_reparation_price.application_id)
+                LEFT JOIN public.application_reparation_status ON (application.id = application_reparation_status.application_id)
+                LEFT JOIN public.reparation_status ON (application_reparation_status.reparation_status_id = reparation_status.id)
+               
+              WHERE
+                    CASE WHEN (($1 = -1) IS NOT TRUE) THEN
+                                      application.id = $1
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($2 = -1) IS NOT TRUE) THEN
+                                      category.id = $2
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($3 = '') IS NOT TRUE) THEN
+                                      person.first_name = $3
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($4 = '') IS NOT TRUE) THEN
+                                      person.last_name = $4
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($5 = '0001-01-01') IS NOT TRUE) THEN
+                                      application.date_of_registration >= DATE($5)
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($6 = '0001-01-01') IS NOT TRUE) THEN
+                                      application.date_of_registration <= DATE($6)
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($7 = -1) IS NOT TRUE) THEN
+                                      application_reparation_price.suggested_price_by_worker >= $7
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($8 = -1) IS NOT TRUE) THEN
+                                      application_reparation_price.suggested_price_by_worker <= $8
+                                    ELSE
+                                      TRUE
+                                    END
+                                    AND
+                  CASE WHEN (($9 = -1) IS NOT TRUE) THEN
+                                      application_reparation_status.reparation_status_id = $9
+                                    ELSE
+                                      TRUE
+                                    END
+                  AND person.role_id = $10
+              ORDER BY date_of_registration DESC`,
+              values: [applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, dateOfRegistrationTo, 
+                suggestedPriceFrom, suggestedPriceTo, reparationStatusId, repairmentServiceSystemRoles.User],
+            };
+
+            const clientConnection = await this._checkClientConnection();
+
+            if(!clientConnection) {
+                return null;
+            }
+
+            await this._runQuery('BEGIN');
+
+            const applications = await this._runQuery(filteringQueryContent);
+
+            await this._runQuery('COMMIT');
+
+            return applications;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+
+    }
 
     async _runQuery(queryContent) {
         try {
             const results = await this.client.query(queryContent);
             return results;
         } catch (error) {
-            const connection = await this.client._checkConnection();
+            const connection = await this._checkClientConnection();
             if(connection) {
                 await this.client.query('ROLLBACK');
             }

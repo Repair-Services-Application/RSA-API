@@ -180,15 +180,47 @@ class Validators {
      *                         in case that the validation doesn't success.
      * @throws {AssertionError} If validation fails.
      */
-    static isDateFormat(value, varName) {
+    static isDateTimeFormat(value, varName) {
         const result = validator.isDate(value.toString(), {
             format: 'YYYY-MM-DD HH:MM:SS', 
+            strictMode: true,
+            delimiters: ['-', ' ', ":"],
+        });
+
+        
+        assert(
+            result,
+            `${varName} should be formatted correctly, example (YYYY-MM-DD HH:MM:SS).`,
+        );
+    }
+
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isDateFormat(value, varName) {
+        const result = validator.isDate(value.toString(), {
+            format: 'YYYY-MM-DD', 
             strictMode: true,
             delimiters: ['-', ' ', ":"],
         });
         assert(
             result,
             `${varName} should be formatted correctly, example (YYYY-MM-DD).`,
+        );
+    }
+
+    static isTimeFormat(value, varName) {
+        const result = validator.matches(value.toString(),
+        '^([0-1]?[0-9]|2[0-4]):([0-5][0-9])(:[0-5][0-9])?$');
+
+        console.log(value.toString());
+        console.log(result);
+
+        assert(
+            result,
+            `${varName} should be formatted correctly, example (HH:MM:SS).`,
         );
     }
 
@@ -205,6 +237,7 @@ class Validators {
         if (value >= 0) {
             result = true;
         }
+
 
         assert(
             result,
@@ -268,7 +301,8 @@ class Validators {
      * @throws {AssertionError} If validation fails.
      */
     static isApplication(value, varName) {
-        let result = validator.isInt(value.id.toString(), {min: 1});
+        console.log(value);
+        let result = validator.isInt(value.applicationId.toString(), {min: 1});
 
         assert(
             result,
@@ -276,7 +310,7 @@ class Validators {
         );
 
         result = validator.isAlpha(value.firstName.toString(), ['sv-SE'], {ignore: '\''});
-
+        
         assert(
             result,
             `${varName} first name should consist only of letters.`,
@@ -289,7 +323,29 @@ class Validators {
             `${varName} last name should consist only of letters.`,
         );
 
-        result = this.isCategory(value, varName);
+        result = this.isDateFormat(value.dateOfRegistration, 'Date of registration');
+
+        result = this.isTimeFormat(value.timeOfRegistration, 'Time of registration');
+    }
+
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static userApprovalStatus(value, varName) {
+        let result = false;
+
+        if (value.toString() === 'null' ||
+            value.toString() === 'true' ||
+            value.toString() === 'false') {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} should be one of the following values, undefined, true or false.`,
+        );
     }
 
     
