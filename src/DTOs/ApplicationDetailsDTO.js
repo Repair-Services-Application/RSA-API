@@ -12,7 +12,6 @@ class ApplicationDetailsDTO{
      * @param {*} applicationDetailsDTO 
      */
     constructor(applicationDetailsDTO) {
-        //console.log(applicationDetailsDTO);
         Validators.isNonNegativeNumber(applicationDetailsDTO.applicationId, 'Application ID');
         Validators.isAlphaString(applicationDetailsDTO.firstName, 'First name');
         Validators.isAlphaString(applicationDetailsDTO.lastName, 'Last name');

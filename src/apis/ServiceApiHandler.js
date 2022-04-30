@@ -233,16 +233,59 @@ class ServiceApiHandler extends ReqHandler {
                             }
 
                             if(applicationDetailsDTO.errorCode === applicationErrorCodesEnum.InvalidID) {
-                                this.sendHTTPResponse(response, 400, 'Invalid applicationId, or the logged User cannot view the specified application')
+                                this.sendHTTPResponse(response, 400, 'Invalid applicationId, or the logged User cannot view the specified application');
+                                return;
                             }
-
-                            this.sendHTTPResponse(response, 200, applicationDetailsDTO);
+                            else {
+                                this.sendHTTPResponse(response, 200, applicationDetailsDTO);
+                                return;
+                            }
+                            
                         }
                     }catch(error) {
                         console.log(error);
                         next(error);
                     }
+                    
                 } 
+            )
+
+            this.reqRouter.get(
+                '/getPersonalApplications',
+                async(request, response, next) => {
+                    try {
+                        
+                        const errorsOfValidationCheck = validationResult(request);
+
+                        if(!errorsOfValidationCheck.isEmpty()) {
+                            this.sendHTTPResponse(response, 400, errorsOfValidationCheck);
+                            return;
+                        }
+
+                        const userDTO = await Authorization.verifyUserAuth(request);
+
+                        if(userDTO === null) {
+                            this.sendHTTPResponse(response, 401, 'Invalid authorization cookie.');
+                            return;
+                        }
+
+                        else {
+                            const personalApplicationsListDTO = await this.controller.getPersonalApplicationsListDTO(userDTO);
+
+                            if(personalApplicationsListDTO === null) {
+                                throw new Error('Expected PersonalApplicationsListDTO object, received null');
+                            }
+                            else {
+                                this.sendHTTPResponse(response, 200, personalApplicationsListDTO);
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        
+                        console.log(error);
+                        next(error);
+                    }
+                }
             )
 
 

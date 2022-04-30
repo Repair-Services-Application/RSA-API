@@ -2,13 +2,13 @@
 
 const Validators = require('../utilities/Validators');
 
-class ApplicationsFilteredListDTO{
+class PersonalApplicationsListDTO{
     constructor(applications) {
         applications.forEach(currentApplication => {
-            Validators.isApplication(currentApplication, 'Application');
+            Validators.isPersonalApplication(currentApplication, 'Application');
         });
         this.applications = applications;
     }
 }
 
-module.exports = ApplicationsFilteredListDTO;
+module.exports = PersonalApplicationsListDTO;

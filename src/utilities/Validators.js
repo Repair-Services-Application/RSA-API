@@ -347,6 +347,36 @@ class Validators {
         result = this.isTimeFormat(value.timeOfRegistration, 'Time of registration');
     }
 
+
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isPersonalApplication(value, varName) {
+        let result = validator.isInt(value.applicationId.toString(), {min: 1});
+
+        assert(
+            result,
+            `${varName} ID should be a positive whole number bigger than zero.`,
+        );
+
+        result = validator.isAlpha(value.categoryDescription.toString(), ['sv-SE'], {ignore: '\' '});
+        
+        assert(
+            result,
+            `${varName} categoryDescription should consist only of letters.`,
+        );
+
+        //result = validator.isAlpha(value.lastName.toString(), ['sv-SE'], {ignore: '\''});
+
+        result = this.isNonNegativeNumber(value.categoryId, 'CategoryId');
+
+        result = this.isDateFormat(value.dateOfRegistration, 'Date of registration');
+
+        result = this.isTimeFormat(value.timeOfRegistration, 'Time of registration');
+    }
+
     /**
      * 
      * @param {*} value 

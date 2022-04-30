@@ -72,6 +72,19 @@ class Controller {
         return applicationRegistrationDTO;
     }
 
+    /**
+     * 
+     * @param {*} applicationId 
+     * @param {*} categoryId 
+     * @param {*} firstname 
+     * @param {*} lastname 
+     * @param {*} dateOfRegistrationFrom 
+     * @param {*} dateOfRegistrationTo 
+     * @param {*} suggestedPriceFrom 
+     * @param {*} suggestedPriceTo 
+     * @param {*} reparationStatusId 
+     * @returns 
+     */
     async getApplicationsByWorker(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, 
         dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {
          
@@ -82,13 +95,40 @@ class Controller {
         }
 
 
+    /**
+     * 
+     * @param {*} applicationId 
+     * @param {*} userDTO 
+     * @returns 
+     */
     async getApplicationDetails(applicationId, userDTO) {
-        //const applicationDetailsDTO = new ApplicationDetailsDTO(applicationId);
         const applicationDetailsDTO = await this.repairmentServiceDAO.returnApplicationDetails(applicationId, userDTO);
-        console.log(applicationDetailsDTO);
         return applicationDetailsDTO;
     }
 
+
+    /**
+     * 
+     * @param {*} userDTO 
+     */
+    async getPersonalApplicationsListDTO(userDTO) {
+        const personalApplicationsListDTO = await this.repairmentServiceDAO.returnPersonalApplicationsListDTO(userDTO);
+        return personalApplicationsListDTO;
+    }
+
+    /**
+     * 
+     * @param {*} applicationId 
+     * @param {*} categoryId 
+     * @param {*} firstname 
+     * @param {*} lastname 
+     * @param {*} dateOfRegistrationFrom 
+     * @param {*} dateOfRegistrationTo 
+     * @param {*} suggestedPriceFrom 
+     * @param {*} suggestedPriceTo 
+     * @param {*} reparationStatusId 
+     * @returns 
+     */
     async _createApplicationsFiltersDTO(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, 
         dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {
             
