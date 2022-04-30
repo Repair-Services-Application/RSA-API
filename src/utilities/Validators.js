@@ -55,7 +55,7 @@ class Validators {
      * @throws {AssertionError} If validation fails.
      */
     static isAlphaString(value, varName) {
-        const result = validator.isAlpha(value.toString(), ['sv-SE'], {ignore: '\''});
+        const result = validator.isAlpha(value.toString(), ['sv-SE'], {ignore: '\' '}) ;
         assert(
             result,
             `${varName} must only includes letters.`,
@@ -77,6 +77,29 @@ class Validators {
         );
     }
 
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isBooleanOrNull(value, varName) {
+        let result = false;
+        const valueString = value.toString();
+
+        if(valueString === 'True' || 
+        valueString === 'true' || 
+        valueString === 'False' || 
+        valueString === 'false' || 
+        valueString === 'Undefined') {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} should be either True/true, False/false or Undefined.`,
+        );
+
+    }
     /**
      * Checks if the formation of the personal number for the person is correct,
      * valid personal number example (YYYYMMDD-XXXX), 13 characters to be specific as it is saved in the db, 
@@ -215,9 +238,6 @@ class Validators {
         const result = validator.matches(value.toString(),
         '^([0-1]?[0-9]|2[0-4]):([0-5][0-9])(:[0-5][0-9])?$');
 
-        console.log(value.toString());
-        console.log(result);
-
         assert(
             result,
             `${varName} should be formatted correctly, example (HH:MM:SS).`,
@@ -301,7 +321,6 @@ class Validators {
      * @throws {AssertionError} If validation fails.
      */
     static isApplication(value, varName) {
-        console.log(value);
         let result = validator.isInt(value.applicationId.toString(), {min: 1});
 
         assert(

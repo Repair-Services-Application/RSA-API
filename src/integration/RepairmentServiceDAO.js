@@ -10,6 +10,8 @@ const userErrorCodesEnum = require('../utilities/userErrorCodesEnum');
 const applicationRegistrationErrorEnum = require('../utilities/applicationRegistrationErrorEnum');
 const filtersEmptyParameersEnum = require("../utilities/filtersEmptyParameersEnum");
 const ApplicationsFilteredListDTO = require("../DTOs/ApplicationsFilteredListDTO");
+const ApplicationDetailsDTO = require("../DTOs/ApplicationDetailsDTO");
+const applicationErrorCodesEnum = require("../utilities/applicationErrorCodesEnum");
 
 class RepairmentServiceDAO {
     
@@ -249,13 +251,13 @@ class RepairmentServiceDAO {
         }
     }
 
-    async registerNewApplication(userDTO, applicationDTO) {
+    async registerNewApplication(userDTO, NewApplicationDTO) {
 
         const categoryCheckQuery = {
             text: `SELECT 	* 
             FROM 	public.category_relation
             WHERE 	category_id = $1`,
-            values: [applicationDTO.categoryId],
+            values: [NewApplicationDTO.categoryId],
         };
 
         const applicationDuplicateCheck = {
@@ -266,7 +268,7 @@ class RepairmentServiceDAO {
 					 person_id = (SELECT  person_id
                                         FROM    public.login_info
                                         WHERE   username = $3)`,
-            values: [applicationDTO.problemDescription, applicationDTO.categoryId, applicationDTO.username],
+            values: [NewApplicationDTO.problemDescription, NewApplicationDTO.categoryId, NewApplicationDTO.username],
         };
 
         const newApplicationQuery = {
@@ -281,7 +283,7 @@ class RepairmentServiceDAO {
                                         (SELECT  person_id
                                         FROM    public.login_info
                                         WHERE   username = $3)) RETURNING id`,
-            values: [applicationDTO.problemDescription, applicationDTO.categoryId, applicationDTO.username],
+            values: [NewApplicationDTO.problemDescription, NewApplicationDTO.categoryId, NewApplicationDTO.username],
         };
 
         
@@ -362,6 +364,125 @@ class RepairmentServiceDAO {
         } catch (error) {
             //this.logger.logException();
             console.log(error)
+            return null;
+        }
+    }
+
+    async returnApplicationDetails(applicationId, userDTO) {
+        
+        let getApplicationDetailsQueryContent;
+
+        if(userDTO.roleID === repairmentServiceSystemRoles.Administrator || userDTO.roleID === repairmentServiceSystemRoles.Worker) {
+            getApplicationDetailsQueryContent = {
+                text: `SELECT 	public.application.id AS application_id,
+                                public.person.first_name,
+                                public.person.last_name,
+                                public.category.description AS category_description,
+                                public.category.id AS category_id,
+                                public.application.problem_description,
+                                public.application.date_of_registration::DATE as date_of_registration,
+                                public.application.date_of_registration::TIME as time_of_registration,
+                                COALESCE (public.application_reparation_price.suggested_price_by_worker, 0) AS suggested_price_by_worker,
+                                COALESCE (public.application_reparation_price.approval_by_user, 'Undefined') AS approval_by_user,
+                                COALESCE (public.reparation_status.id, 0) AS reparation_status_id,
+                                  COALESCE (public.reparation_status.status_description, 'Undefined') AS reparation_status_description
+            
+                        FROM	public.application
+                                LEFT OUTER JOIN public.person ON (public.application.person_id = public.person.id)
+                                LEFT OUTER JOIN public.category_relation ON (public.application.category_relation_id = public.category_relation.id)
+                                LEFT OUTER JOIN public.category ON (public.category_relation.category_id = public.category.id)
+                                LEFT OUTER JOIN public.application_reparation_price ON (public.application.id = public.application_reparation_price.application_id)
+                                LEFT OUTER JOIN public.application_reparation_status ON (public.application.id = public.application_reparation_status.application_id)
+                                LEFT OUTER JOIN public.reparation_status ON (public.application_reparation_status.reparation_status_id = public.reparation_status.id)
+                                INNER JOIN public.login_info ON (public.person.id = public.login_info.person_id)
+                        WHERE	application.id = $1`,
+                values: [applicationId],
+            };
+        }
+        else {
+            getApplicationDetailsQueryContent = {
+                text: `SELECT 	public.application.id AS application_id,
+                                public.person.first_name,
+                                public.person.last_name,
+                                public.category.description AS category_description,
+                                public.category.id AS category_id,
+                                public.application.problem_description,
+                                public.application.date_of_registration::DATE as date_of_registration,
+                                public.application.date_of_registration::TIME as time_of_registration,
+                                COALESCE (public.application_reparation_price.suggested_price_by_worker, 0) AS suggested_price_by_worker,
+                                COALESCE (public.application_reparation_price.approval_by_user, 'Undefined') AS approval_by_user,
+                                COALESCE (public.reparation_status.id, 0) AS reparation_status_id,
+                                COALESCE (public.reparation_status.status_description, 'Undefined') AS reparation_status_description
+            
+                        FROM	public.application
+                                LEFT OUTER JOIN public.person ON (public.application.person_id = public.person.id)
+                                LEFT OUTER JOIN public.category_relation ON (public.application.category_relation_id = public.category_relation.id)
+                                LEFT OUTER JOIN public.category ON (public.category_relation.category_id = public.category.id)
+                                LEFT OUTER JOIN public.application_reparation_price ON (public.application.id = public.application_reparation_price.application_id)
+                                LEFT OUTER JOIN public.application_reparation_status ON (public.application.id = public.application_reparation_status.application_id)
+                                LEFT OUTER JOIN public.reparation_status ON (public.application_reparation_status.reparation_status_id = public.reparation_status.id)
+                                INNER JOIN public.login_info ON (public.person.id = public.login_info.person_id)
+                        WHERE	application.id = $1 and
+                                login_info.username = $2`,
+                values: [applicationId, userDTO.username],
+            };
+        }
+        
+        try {
+            
+            const clientConnection = this._checkClientConnection();
+
+            if(!clientConnection) {
+                return null;
+            }
+
+            let applicationDetailsDTO;
+
+            await this._runQuery('BEGIN');
+
+            const getApplicationResult = await this._runQuery(getApplicationDetailsQueryContent);
+            if(getApplicationResult.rowCount <= 0) {
+
+                applicationDetailsDTO = {
+                    applicationId: applicationId, 
+                    firstName: 'DUMMY', 
+                    lastName: 'DUMMY', 
+                    categoryDescription:'DUMMY', 
+                    categoryId: 0, 
+                    problemDescription: 'DUMMY', 
+                    dateOfRegistration: '0001-01-01', 
+                    timeOfRegistration: '00:00:00', 
+                    suggestedPriceByWorker: 0, 
+                    priceApprovalByUser: 'Undefined', 
+                    reparationStatusId: 0,
+                    reparationStatusDescription: 'DUMMY', 
+                    errorCode: applicationErrorCodesEnum.InvalidID,
+                };
+            }
+            else {
+                applicationDetailsDTO = {
+                    applicationId: getApplicationResult.rows[0].application_id, 
+                    firstName: getApplicationResult.rows[0].first_name, 
+                    lastName: getApplicationResult.rows[0].last_name, 
+                    categoryDescription: getApplicationResult.rows[0].category_description, 
+                    categoryId: getApplicationResult.rows[0].category_id, 
+                    problemDescription: getApplicationResult.rows[0].problem_description, 
+                    dateOfRegistration: getApplicationResult.rows[0].date_of_registration, 
+                    timeOfRegistration: getApplicationResult.rows[0].time_of_registration, 
+                    suggestedPriceByWorker: getApplicationResult.rows[0].suggested_price_by_worker, 
+                    priceApprovalByUser: getApplicationResult.rows[0].approval_by_user, 
+                    reparationStatusId: getApplicationResult.rows[0].reparation_status_id,
+                    reparationStatusDescription: getApplicationResult.rows[0].reparation_status_description, 
+                    errorCode: applicationErrorCodesEnum.OK,
+                };
+            }
+
+            return new ApplicationDetailsDTO(applicationDetailsDTO);
+
+
+        } catch (error) {
+            
+            console.log(error);
             return null;
         }
     }

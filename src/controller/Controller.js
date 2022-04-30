@@ -1,6 +1,6 @@
 'use strict';
 
-const ApplicationDTO = require('../DTOs/ApplicationDTO');
+const NewApplicationDTO = require('../DTOs/NewApplicationDTO');
 const ApplicationsFilterParamsDTO = require('../DTOs/ApplicationsFilterParamsDTO');
 const SignupDTO = require('../DTOs/SignupDTO');
 const RepairmentServiceDAO = require('../integration/RepairmentServiceDAO');
@@ -67,8 +67,8 @@ class Controller {
      * @returns 
      */
     async registerApplication(userDTO, categoryId, problemDescription) {
-        const applicationDTO = new ApplicationDTO(userDTO.username, categoryId, problemDescription);
-        const applicationRegistrationDTO = await this.repairmentServiceDAO.registerNewApplication(userDTO, applicationDTO);
+        const newApplicationDTO = new NewApplicationDTO(userDTO.username, categoryId, problemDescription);
+        const applicationRegistrationDTO = await this.repairmentServiceDAO.registerNewApplication(userDTO, newApplicationDTO);
         return applicationRegistrationDTO;
     }
 
@@ -82,6 +82,12 @@ class Controller {
         }
 
 
+    async getApplicationDetails(applicationId, userDTO) {
+        //const applicationDetailsDTO = new ApplicationDetailsDTO(applicationId);
+        const applicationDetailsDTO = await this.repairmentServiceDAO.returnApplicationDetails(applicationId, userDTO);
+        console.log(applicationDetailsDTO);
+        return applicationDetailsDTO;
+    }
 
     async _createApplicationsFiltersDTO(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, 
         dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {

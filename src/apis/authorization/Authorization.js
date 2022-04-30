@@ -133,6 +133,31 @@ class Authorization {
         }
     }
 
+    /**
+     * 
+     * @param {*} request 
+     * @returns 
+     */
+    static async verifyLoggedInUserAuth(request) {
+        const authorizationCookie = request.cookies.repairmentServiceAuth;
+        if(!authorizationCookie) {
+            return null;
+        }
+        try {
+            const userDTOPayload = jwt.verify(authorizationCookie, process.env.JWT_SECRET);
+            const userDTO = userDTOPayload.userDTO;
+            if(userDTO.roleID === repairmentServiceSystemRoles.Worker || userDTO.roleID === repairmentServiceSystemRoles.Administrator || userDTO.roleID === repairmentServiceSystemRoles.User) {
+                return userDTO;
+            }
+            else{
+                return null;
+            }
+
+        } catch (error) {
+            return null;
+        }
+    }
+
 
 
     /**

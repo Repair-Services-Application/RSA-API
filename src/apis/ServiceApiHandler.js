@@ -5,6 +5,7 @@ const Validators = require("../utilities/Validators");
 const Authorization = require("./authorization/Authorization");
 const ReqHandler = require("./ReqHandler");
 const applicationRegistrationErrorEnum = require("../utilities/applicationRegistrationErrorEnum");
+const applicationErrorCodesEnum = require("../utilities/applicationErrorCodesEnum");
 
 class ServiceApiHandler extends ReqHandler {
     constructor() {
@@ -200,6 +201,48 @@ class ServiceApiHandler extends ReqHandler {
                 }
 
 
+            )
+
+            this.reqRouter.get(
+                '/getApplicationDetails',
+                check('applicationId').custom((value) => {
+                    Validators.isNonNegativeWholeNumber(value, 'applicationId');
+                    return true;
+                }),
+                async (request, response, next) => {
+
+                    try {
+                        const errorsOfValidationCheck = validationResult(request);
+
+                        if(!errorsOfValidationCheck.isEmpty()) {
+                            this.sendHTTPResponse(response, 400, errorsOfValidationCheck);
+                            return;
+                        }
+
+                        const userDTO = await Authorization.verifyLoggedInUserAuth(request);
+
+                        if(userDTO === null) {
+                            this.sendHTTPResponse(response, 401, 'Invalid authorization cookie.');
+                            return;
+                        }
+                        else{
+                            const applicationDetailsDTO = await this.controller.getApplicationDetails(request.query.applicationId, userDTO);
+
+                            if(applicationDetailsDTO === null) {
+                                throw new Error('Expected ApplicationDetailsDTO object, received null');
+                            }
+
+                            if(applicationDetailsDTO.errorCode === applicationErrorCodesEnum.InvalidID) {
+                                this.sendHTTPResponse(response, 400, 'Invalid applicationId, or the logged User cannot view the specified application')
+                            }
+
+                            this.sendHTTPResponse(response, 200, applicationDetailsDTO);
+                        }
+                    }catch(error) {
+                        console.log(error);
+                        next(error);
+                    }
+                } 
             )
 
 
