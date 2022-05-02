@@ -265,6 +265,11 @@ class Validators {
         );
     }
 
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
     static isValidMobileNumber(value, varName) {
         
         let result = false;

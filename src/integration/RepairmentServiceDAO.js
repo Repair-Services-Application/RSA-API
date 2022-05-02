@@ -13,14 +13,21 @@ const ApplicationsFilteredListDTO = require("../DTOs/ApplicationsFilteredListDTO
 const ApplicationDetailsDTO = require("../DTOs/ApplicationDetailsDTO");
 const PersonalApplicationsListDTO = require("../DTOs/PersonalApplicationsListDTO");
 const applicationErrorCodesEnum = require("../utilities/applicationErrorCodesEnum");
+const Logger = require("../utilities/Logger");
 
 class RepairmentServiceDAO {
     
     /**
-     * 
+     * The responsible class for the database managing which ranges between 
+     * Selecting, Inserting and Updating data from and to the database.
      */
     constructor() {
 
+        /**
+         * Creates an instance of the {RepairmentServiceDAO} object with the needed credentials to connect to the database. 
+         * To disable the automatic date parsing in the database by node-postgres, the options are: idOfDateObject, 
+         * defaultRawParser and types.setTypeParser
+         */
         const idOfDateObject = 1082;
         const defaultRawParser = (value) => value;
         types.setTypeParser(idOfDateObject, defaultRawParser);
@@ -38,7 +45,7 @@ class RepairmentServiceDAO {
             
         });
 
-        //this.logger = new Logger('DatabaseHandlerLogger');
+        this.logger = new Logger('DatabaseHandlerLogger');
         this.pageLimit = 30;
     }
 
@@ -51,22 +58,22 @@ class RepairmentServiceDAO {
                 this.client._connecting = true;
                 this.client._connected = false;
                 this.client._connectionError = true;
-                //this.logger.logException(error);
-                console.log('error while trying to connect to the db');
+                this.logger.logCurrentException(error);
             });
             await this.client.connect();
         } catch (error) {
-            //this.logger.logException(error);
-            console.log(error);
+            this.logger.logCurrentException(error);
         }
         
     }
 
     /**
-     * 
-     * @param {*} username 
-     * @param {*} password 
-     * @returns 
+     * Check of the user's entered username and password are correct or not.
+     * @param {string} username The used username for the login process, and even the user's profile name. 
+     * @param {string} password The used password for the login process.
+     * @returns {UserDTO | null} If the username and passowrd are correct, a {UserDTO} object is returned including the username, 
+     *                              roleID and error/status code.
+     *                           If the login has failed, it returns null.
      */
     async loginUser(username, password) {
         const hashedPass = await this._generateHashedPassword(username, password);
@@ -105,15 +112,18 @@ class RepairmentServiceDAO {
             return returnedUserDTO;
 
         } catch (error) {
-            //this.logger.logException(error);
+            this.logger.logException(error);
             return null;
         }
     }
 
     /**
-     * 
-     * @param {*} signupDTO 
-     * @returns 
+     * Use the entered new user's data, check if there is already a user using the same email adress, username and personal number, 
+     * and return the UserDTO with specific errorCode status.
+     * If there is no other users use the same data, The methods commits the new user registration entries to the database. 
+     * @param {SignupDTO} signupDTO contains the signup entered data.
+     * @returns {UserDTO | null} UserDTO when the signup process has succeseeded,
+     *                           null if there is no connection to the database, or some other error occurs. 
      */
     async signupUser(signupDTO) {
         const hashedPass = await this._generateHashedPassword(signupDTO.username, signupDTO.password);
@@ -193,20 +203,20 @@ class RepairmentServiceDAO {
 
             return returnedUserDTO;
 
-
-
         } catch (error) {
-            //this.logger.logException(error);
+            this.logger.logException(error);
             return null;
         }
         
     }
 
-    /**
-     * 
-     */
-    async getCategories() {
-        let rootCateogry = 0;
+   /**
+    * Get all the categories with the specified Parent category id (rootCategoryId). For root cateogries, the parentCategoryId is 0. 
+    * @param {number} rootCateogryId The root category id of the specified cateogries
+    * @returns {CategoryDTO[] | null} a list of CategoryDTO if the categories have returned successfully,
+    *                                 null  if there is no connection to the database, or some other error occurs.  
+    */
+    async getCategories(rootCateogryId) {
         
         const getCategoriesQuery = {
             text: ` SELECT  category_relation.category_id,
@@ -215,7 +225,7 @@ class RepairmentServiceDAO {
                     FROM    public.category_relation category_relation
                             INNER JOIN public.category category ON (category_relation.category_id = category.id)
                     WHERE   parent_category_id = $1`,
-            values: [rootCateogry],
+            values: [rootCateogryId],
         };
 
         try {
@@ -252,6 +262,13 @@ class RepairmentServiceDAO {
         }
     }
 
+    /**
+     * Register a new application for the logged in user (only normal users/customers are allowed to register applications)
+     * @param {UserDTO} userDTO The logged in userDTO including data about username, roleID and errorCode. 
+     * @param {NewApplicationDTO} NewApplicationDTO The new application data to be used for application registration.
+     * @returns {ApplicationRegistrationDTO | null} The ApplicationRegistrationDTO object contains the application Id, 
+     *                                              Null if the connection is lost to the database, or some other error occurs.
+     */
     async registerNewApplication(userDTO, NewApplicationDTO) {
 
         const categoryCheckQuery = {
@@ -330,13 +347,18 @@ class RepairmentServiceDAO {
 
 
         } catch (error) {
-            //this.logger.logException(error);
-            console.log(error);
+            this.logger.logException(error);
             return null;
         }
     }
 
-
+    /**
+     * /**
+     * Get the applications by worker using filtering parameters included in the {ApplicationsFilterParamsDTO} object.
+     * @param {ApplicationsFilterParamsDTO} applicationsFilterParamsDTO The filtering paramteres DTO.
+     * @returns {ApplicationsFilteredListDTO | null} The ApplicationsFilteredListDTO object contains the A list of the filtered applications, 
+     *                                               Null if the connection is lost to the database, or some other error occurs.
+     */
     async getApplicationsListByWorker(applicationsFilterParamsDTO) {
         try {
             
@@ -361,16 +383,21 @@ class RepairmentServiceDAO {
             return new ApplicationsFilteredListDTO(applicationList);
 
         } catch (error) {
-            //this.logger.logException();
-            console.log(error)
+            this.logger.logException();
             return null;
         }
     }
 
+    /**
+     * Get the application details according to the loggedin UserDTO's username and application Id if the loggedin user is normal user, 
+     * or using only the application Id, if the logged in user is either worker or administrator.
+     * @param {number} applicationId The chosen application's id to be shown.
+     * @param {UserDTO} userDTO the logged in userDTO
+     * @returns {ApplicationDetailsDTO | null} ApplicationDetailsDTO if the user is eligible to show the application, 
+     *                                          and the application could be returned successfully.
+     *                                         null if the connection to the database lost, or some other error occured.
+     */
     async returnApplicationDetails(applicationId, userDTO) {
-        
-        
-        
         try {
 
             let getApplicationDetailsQueryContent;
@@ -482,13 +509,19 @@ class RepairmentServiceDAO {
 
 
         } catch (error) {
-            
-            console.log(error);
+            this.logger.logException();
             return null;
         }
     }
 
-
+    /**
+     * Returns the logged in user's submmitted applications using the username in the userDTO, 
+     * this endpoint is only accessible by normal users (no worker nor administrator).
+     * @param {UserDTO} userDTO the logged in user's userDTO including the username and roleId.
+     * @returns {PersonalApplicationsListDTO | null} return a object {PersonalApplicationsListDTO} 
+     *                                               including a list of the returned applications.
+     *                                               null if the connection to the database is lost, or some other error occured.
+     */
     async returnPersonalApplicationsListDTO(userDTO) {
         try {
             
@@ -518,12 +551,8 @@ class RepairmentServiceDAO {
                 return null;
             }
 
-            //let personalApplicationsListDTO;
-
             await this._runQuery('BEGIN');
-
             const getPersonalApplicationsListDTO = await this._runQuery(getPersonalApplicationsListQuery);
-
             
             if(getPersonalApplicationsListDTO.rowCount <= 0) {
                 return new PersonalApplicationsListDTO([])
@@ -544,8 +573,7 @@ class RepairmentServiceDAO {
             return new PersonalApplicationsListDTO(personalApplicationsList);
 
         } catch (error) {
-            
-            console.log(error);
+            this.logger.logException();
             return null;
         }
     }
@@ -554,8 +582,6 @@ class RepairmentServiceDAO {
 
     async _getFilteredApplicationsList(applicationsFilterParamsDTO) {
         try {
-            
-        
             let applicationId = applicationsFilterParamsDTO.applicationId;
             let categoryId = applicationsFilterParamsDTO.categoryId;
             let firstname = applicationsFilterParamsDTO.firstname;
@@ -679,7 +705,7 @@ class RepairmentServiceDAO {
 
             return applications;
         } catch (error) {
-            console.log(error);
+            this.logger.logException();
             return null;
         }
 
@@ -697,14 +723,6 @@ class RepairmentServiceDAO {
             throw error;
         }
     }
-
-   
-
-    // async _getPersonId(username) {
-    //    const getPersonIdQuery = {
-    //        text: ``
-    //    }
-    // }
 
     async _generateHashedPassword(username, password) {
         const defaultSalt = process.env.GLOBAL_SALT;
