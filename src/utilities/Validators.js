@@ -55,7 +55,7 @@ class Validators {
      * @throws {AssertionError} If validation fails.
      */
     static isAlphaString(value, varName) {
-        const result = validator.isAlpha(value.toString(), ['sv-SE'], {ignore: '\''});
+        const result = validator.isAlpha(value.toString(), ['sv-SE'], {ignore: '\' '}) ;
         assert(
             result,
             `${varName} must only includes letters.`,
@@ -77,6 +77,29 @@ class Validators {
         );
     }
 
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isBooleanOrNull(value, varName) {
+        let result = false;
+        const valueString = value.toString();
+
+        if(valueString === 'True' || 
+        valueString === 'true' || 
+        valueString === 'False' || 
+        valueString === 'false' || 
+        valueString === 'Undefined') {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} should be either True/true, False/false or Undefined.`,
+        );
+
+    }
     /**
      * Checks if the formation of the personal number for the person is correct,
      * valid personal number example (YYYYMMDD-XXXX), 13 characters to be specific as it is saved in the db, 
@@ -143,25 +166,32 @@ class Validators {
     }
 
     /**
-     * Check if the value is a valid category, Category is an object {id, type}
+     * Check if the value is a valid category, Category is an object {id, type, parentCategoryId}
      * @param {any} value The value to be validated.
      * @param {String} varName  The passed variable name to be asserted along in the assertion error message
      *                         in case that the validation doesn't success.
      * @throws {AssertionError} If validation fails.
      */
     static isCategory(value, varName) {
-        let result = validator.isInt(value.id.toString(), {min: 1});
+        let result = validator.isInt(value.category_id.toString(), {min: 1});
 
         assert(
             result,
             `${varName} ID should be a positive whole number.`,
         );
 
-        result = validator.isAlpha(value.type.toString(), ['sv-SE'], {ignore: ' '});
+        result = validator.isAlpha(value.description.toString(), ['sv-SE'], {ignore: ' '});
 
         assert(
             result,
             `${varName} type should consist of letters that could be separated by spaces.`,
+        );
+
+        result = validator.isInt(value.parent_category_id.toString(), {min: 0});
+
+        assert(
+            result,
+            `${varName} ID should be higher than Zero.`,
         );
     }
 
@@ -173,15 +203,44 @@ class Validators {
      *                         in case that the validation doesn't success.
      * @throws {AssertionError} If validation fails.
      */
-    static isDateFormat(value, varName) {
+    static isDateTimeFormat(value, varName) {
         const result = validator.isDate(value.toString(), {
             format: 'YYYY-MM-DD HH:MM:SS', 
+            strictMode: true,
+            delimiters: ['-', ' ', ":"],
+        });
+
+        
+        assert(
+            result,
+            `${varName} should be formatted correctly, example (YYYY-MM-DD HH:MM:SS).`,
+        );
+    }
+
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isDateFormat(value, varName) {
+        const result = validator.isDate(value.toString(), {
+            format: 'YYYY-MM-DD', 
             strictMode: true,
             delimiters: ['-', ' ', ":"],
         });
         assert(
             result,
             `${varName} should be formatted correctly, example (YYYY-MM-DD).`,
+        );
+    }
+
+    static isTimeFormat(value, varName) {
+        const result = validator.matches(value.toString(),
+        '^([0-1]?[0-9]|2[0-4]):([0-5][0-9])(:[0-5][0-9])?$');
+
+        assert(
+            result,
+            `${varName} should be formatted correctly, example (HH:MM:SS).`,
         );
     }
 
@@ -199,12 +258,18 @@ class Validators {
             result = true;
         }
 
+
         assert(
             result,
             `${varName} should be a non negative number.`,
         );
     }
 
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
     static isValidMobileNumber(value, varName) {
         
         let result = false;
@@ -236,14 +301,32 @@ class Validators {
     }
 
     /**
-     * Check if the value is an application object {id, firstName, lastName, categoryDescription, dateOfRegistration, statusDescription}.
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isNotEmpty(value, varName) {
+
+        let result = false;
+        if(value !== '') {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} cannot be empty.`,
+        );
+    }
+
+    /**
+     * Check if the value is an application object {id, firstName, lastName, categoryDescription, statusDescription}.
      * @param {any} value The value to be validated.
      * @param {String} varName  The passed variable name to be asserted along in the assertion error message
      *                         in case that the validation doesn't success.
      * @throws {AssertionError} If validation fails.
      */
     static isApplication(value, varName) {
-        let result = validator.isInt(value.id.toString(), {min: 1});
+        let result = validator.isInt(value.applicationId.toString(), {min: 1});
 
         assert(
             result,
@@ -251,7 +334,7 @@ class Validators {
         );
 
         result = validator.isAlpha(value.firstName.toString(), ['sv-SE'], {ignore: '\''});
-
+        
         assert(
             result,
             `${varName} first name should consist only of letters.`,
@@ -264,7 +347,59 @@ class Validators {
             `${varName} last name should consist only of letters.`,
         );
 
-        result = this.isCategory(value, varName);
+        result = this.isDateFormat(value.dateOfRegistration, 'Date of registration');
+
+        result = this.isTimeFormat(value.timeOfRegistration, 'Time of registration');
+    }
+
+
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static isPersonalApplication(value, varName) {
+        let result = validator.isInt(value.applicationId.toString(), {min: 1});
+
+        assert(
+            result,
+            `${varName} ID should be a positive whole number bigger than zero.`,
+        );
+
+        result = validator.isAlpha(value.categoryDescription.toString(), ['sv-SE'], {ignore: '\' '});
+        
+        assert(
+            result,
+            `${varName} categoryDescription should consist only of letters.`,
+        );
+
+        //result = validator.isAlpha(value.lastName.toString(), ['sv-SE'], {ignore: '\''});
+
+        result = this.isNonNegativeNumber(value.categoryId, 'CategoryId');
+
+        result = this.isDateFormat(value.dateOfRegistration, 'Date of registration');
+
+        result = this.isTimeFormat(value.timeOfRegistration, 'Time of registration');
+    }
+
+    /**
+     * 
+     * @param {*} value 
+     * @param {*} varName 
+     */
+    static userApprovalStatus(value, varName) {
+        let result = false;
+
+        if (value.toString() === 'null' ||
+            value.toString() === 'true' ||
+            value.toString() === 'false') {
+            result = true;
+        }
+
+        assert(
+            result,
+            `${varName} should be one of the following values, undefined, true or false.`,
+        );
     }
 
     

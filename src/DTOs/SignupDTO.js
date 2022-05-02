@@ -3,19 +3,19 @@
 const Validators = require("../utilities/Validators");
 
 /**
- * 
+ * A class contains data about the new signuped user. 
  */
 class SignupDTO {
 
     /**
-     * 
-     * @param {*} firstname 
-     * @param {*} lastname 
-     * @param {*} personalNumber 
-     * @param {*} email 
-     * @param {*} username 
-     * @param {*} password 
-     * @param {*} mobileNumber 
+     * Constructs a new instance of {SignupDTO} object using the passed parameters. 
+     * @param {string} firstname The new user's firstname
+     * @param {string} lastname  The new user's lastname
+     * @param {string} personalNumber  The new user's personalNumber
+     * @param {string} email  The new user's email adress
+     * @param {string} username  The new user's username which will be used for the login process.
+     * @param {string} password  The new user's password which will be used for the login process.
+     * @param {string} mobileNumber  The new user's mobile number.
      */
     constructor(firstname, lastname, personalNumber, email, username, password, mobileNumber) {
         Validators.isAlphaString(firstname, 'First name');
