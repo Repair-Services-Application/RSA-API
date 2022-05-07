@@ -203,6 +203,7 @@ class Authorization {
 
         };
         response.cookie(this.AUTH_COOKIE_NAME, jwtToken, cookieOptions);
+
     }
 
 

@@ -29,14 +29,14 @@ app.use(cors({
 
 app.set('etag', false);
 
-app.use((req, res, next) => {
-    res.set('Cache-Control', 'no-store');
+app.use((request, response, next) => {
+    response.set('Cache-Control', 'no-store');
     next();
 })
 
-app.get('/', (req, res, next) => {
+app.get('/', (request, response, next) => {
     try{
-        return res.send('Welcome to the Repair service application API');
+        return response.send('Welcome to the Repairment service application API');
     } catch(err) {
         next(err);
     }

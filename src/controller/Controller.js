@@ -69,6 +69,16 @@ class Controller {
     }
 
     /**
+     * 
+     * @returns 
+     */
+    async getReparationStatusList() {
+        const reparationStatusList = this.repairmentServiceDAO.getReparationStatuses();
+        return reparationStatusList;
+    }
+    
+
+    /**
      * Registering a new application using the recieved data from the {ServiceApiHandler}.
      * @param {UserDTO} userDTO the loggedIn userDTO, conatining the user's username, roleId, and errorCode.
      * @param {number} categoryId The specified application's category id. It should be positive number.
@@ -149,8 +159,6 @@ class Controller {
     async _createApplicationsFiltersDTO(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, 
         dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {
             
-            console.log('suggestedPriceFrom: ' + suggestedPriceFrom);
-
             let requestedApplicationId = parseInt(applicationId);
             let requestedCategoryId = parseInt(categoryId);
             let requestedFirstname = firstname;
