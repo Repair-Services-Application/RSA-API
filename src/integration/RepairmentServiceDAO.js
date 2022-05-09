@@ -14,6 +14,7 @@ const ApplicationDetailsDTO = require("../DTOs/ApplicationDetailsDTO");
 const PersonalApplicationsListDTO = require("../DTOs/PersonalApplicationsListDTO");
 const applicationErrorCodesEnum = require("../utilities/applicationErrorCodesEnum");
 const Logger = require("../utilities/Logger");
+const ReparationStatusDTO = require("../DTOs/ReparationStatusDTO");
 
 class RepairmentServiceDAO {
     
@@ -262,6 +263,48 @@ class RepairmentServiceDAO {
         }
     }
 
+    async getReparationStatuses() {
+        
+        const getReparationStatusQuery = {
+            text: ` SELECT  public.reparation_status.id as status_id,
+                            public.reparation_status.status_description
+                    FROM    public.reparation_status`,
+            values: [],
+        };
+
+        try {
+            let returnedList = [];
+            const clientConnection = this._checkClientConnection();
+
+            if(clientConnection === null) {
+                return null;
+            }
+
+            await this._runQuery('BEGIN');
+            const reparationStatusResult = await this._runQuery(getReparationStatusQuery);
+            if(reparationStatusResult.rowCount <= 0) {
+                returnedList = [];
+            }
+            else{
+                for (let i = 0; i < reparationStatusResult.rowCount; i++) {
+
+                    const currentReparationStatus = new ReparationStatusDTO(reparationStatusResult.rows[i].status_id, 
+                        reparationStatusResult.rows[i].status_description);
+                    returnedList[i] = currentReparationStatus;
+                    }
+            }
+
+            await this._runQuery('COMMIT');
+
+            return returnedList;
+            
+
+        } catch (error) {
+            this.logger.logException(error);
+            return null;
+        }
+    }
+
     /**
      * Register a new application for the logged in user (only normal users/customers are allowed to register applications)
      * @param {UserDTO} userDTO The logged in userDTO including data about username, roleID and errorCode. 
@@ -401,7 +444,6 @@ class RepairmentServiceDAO {
         try {
 
             let getApplicationDetailsQueryContent;
-
             if(userDTO.roleID === repairmentServiceSystemRoles.Administrator || userDTO.roleID === repairmentServiceSystemRoles.Worker) {
                 getApplicationDetailsQueryContent = {
                     text: `SELECT 	public.application.id AS application_id,

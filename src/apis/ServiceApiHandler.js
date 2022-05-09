@@ -75,6 +75,33 @@ class ServiceApiHandler extends ReqHandler {
 
             );
 
+            this.reqRouter.get(
+                '/getReparationStatusList',
+                async(request, response, next) => {
+                    try {
+                        const userDTO = await Authorization.verifyWorkerAdminAuth(request, response);
+
+                        if(userDTO === null) {
+                            Authorization.clearAuthCookie(response);
+                            this.sendHTTPResponse(response, 401, 'Invalid authorization cookie found.');
+                            return;
+                        }
+                        else {
+                            const getReparationStatusList = await this.controller.getReparationStatusList();
+                            if (getReparationStatusList === null) {
+                                throw new Error('Expected Category list, received null.');
+                            }
+                            this.sendHTTPResponse(response, 200, getReparationStatusList);
+                            return;
+                        }
+
+                    } catch (error) {
+                        next(error);
+                    }
+                },
+
+            );
+
             /**
              * Register new applications.
              * This endpoint is only accessible by the normal users (no Worker nor Administrator).
