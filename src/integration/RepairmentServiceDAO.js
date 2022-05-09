@@ -113,7 +113,7 @@ class RepairmentServiceDAO {
             return returnedUserDTO;
 
         } catch (error) {
-            this.logger.logException(error);
+            this.logger.logCurrentException(error);
             return null;
         }
     }
@@ -205,7 +205,7 @@ class RepairmentServiceDAO {
             return returnedUserDTO;
 
         } catch (error) {
-            this.logger.logException(error);
+            this.logger.logCurrentException(error);
             return null;
         }
         
@@ -213,11 +213,11 @@ class RepairmentServiceDAO {
 
    /**
     * Get all the categories with the specified Parent category id (rootCategoryId). For root cateogries, the parentCategoryId is 0. 
-    * @param {number} rootCateogryId The root category id of the specified cateogries
+    * @param {number} rootCategoryId The root category id of the specified cateogries
     * @returns {CategoryDTO[] | null} a list of CategoryDTO if the categories have returned successfully,
     *                                 null  if there is no connection to the database, or some other error occurs.  
     */
-    async getCategories(rootCateogryId) {
+    async getCategories(rootCategoryId) {
         
         const getCategoriesQuery = {
             text: ` SELECT  category_relation.category_id,
@@ -226,7 +226,7 @@ class RepairmentServiceDAO {
                     FROM    public.category_relation category_relation
                             INNER JOIN public.category category ON (category_relation.category_id = category.id)
                     WHERE   parent_category_id = $1`,
-            values: [rootCateogryId],
+            values: [rootCategoryId],
         };
 
         try {
@@ -258,7 +258,7 @@ class RepairmentServiceDAO {
             
 
         } catch (error) {
-            this.logger.logException(error);
+            this.logger.logCurrentException(error);
             return null;
         }
     }
@@ -300,7 +300,7 @@ class RepairmentServiceDAO {
             
 
         } catch (error) {
-            this.logger.logException(error);
+            this.logger.logCurrentException(error);
             return null;
         }
     }
@@ -390,7 +390,7 @@ class RepairmentServiceDAO {
 
 
         } catch (error) {
-            this.logger.logException(error);
+            this.logger.logCurrentException(error);
             return null;
         }
     }
@@ -426,7 +426,7 @@ class RepairmentServiceDAO {
             return new ApplicationsFilteredListDTO(applicationList);
 
         } catch (error) {
-            this.logger.logException();
+            this.logger.logCurrentException();
             return null;
         }
     }
@@ -551,7 +551,7 @@ class RepairmentServiceDAO {
 
 
         } catch (error) {
-            this.logger.logException();
+            this.logger.logCurrentException();
             return null;
         }
     }
@@ -615,7 +615,7 @@ class RepairmentServiceDAO {
             return new PersonalApplicationsListDTO(personalApplicationsList);
 
         } catch (error) {
-            this.logger.logException();
+            this.logger.logCurrentException();
             return null;
         }
     }
@@ -747,7 +747,7 @@ class RepairmentServiceDAO {
 
             return applications;
         } catch (error) {
-            this.logger.logException();
+            this.logger.logCurrentException();
             return null;
         }
 

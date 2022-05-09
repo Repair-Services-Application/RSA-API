@@ -10,7 +10,7 @@ class ApplicationsFilterParamsDTO{
     /**
      * Constructs an instance of the {ApplicationsFilterParamsDTO} object.
      * @param {number} applicationId The specified application's id
-     * @param {string} categoryId The specified category's id.
+     * @param {number} categoryId The specified category's id.
      * @param {string} firstname The specified user's firstname.
      * @param {string} lastname The specified user's lastname.
      * @param {string} dateOfRegistrationFrom The specified date of registration range starts from

@@ -63,8 +63,8 @@ class Controller {
      * @returns {CategoryDTO[] | null} containging a list of the categories descriptions and their ids. 
      * null if the getCategories process failes
      */
-    async getCategories(rootCateogryId) {
-        const categoriesList = this.repairmentServiceDAO.getCategories(rootCateogryId);
+    async getCategories(rootCategoryId) {
+        const categoriesList = this.repairmentServiceDAO.getCategories(rootCategoryId);
         return categoriesList;
     }
 

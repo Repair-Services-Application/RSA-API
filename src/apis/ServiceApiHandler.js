@@ -50,7 +50,7 @@ class ServiceApiHandler extends ReqHandler {
             this.reqRouter.get(
                 '/getCategories',
                 async(request, response, next) => {
-                    let rootCateogryId = 0;
+                    let rootCategoryId = 0;
                     try {
                         const userDTO = await Authorization.verifyRequestAuthCookie(request, response);
 
@@ -60,7 +60,7 @@ class ServiceApiHandler extends ReqHandler {
                             return;
                         }
                         else {
-                            const categoriesList = await this.controller.getCategories(rootCateogryId);
+                            const categoriesList = await this.controller.getCategories(rootCategoryId);
                             if (categoriesList === null) {
                                 throw new Error('Expected Category list, received null.');
                             }
