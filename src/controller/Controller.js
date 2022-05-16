@@ -86,8 +86,8 @@ class Controller {
      * @returns {ApplicationRegistrationDTO | null}  containing the application Id and errorCode. 
      * It returns null, if the application registartion fails.
      */
-    async registerApplication(userDTO, categoryId, problemDescription) {
-        const newApplicationDTO = new NewApplicationDTO(userDTO.username, categoryId, problemDescription);
+    async registerApplication(userDTO, categoryRelationId, problemDescription) {
+        const newApplicationDTO = new NewApplicationDTO(userDTO.username, categoryRelationId, problemDescription);
         const applicationRegistrationDTO = await this.repairmentServiceDAO.registerNewApplication(userDTO, newApplicationDTO);
         return applicationRegistrationDTO;
     }
@@ -107,10 +107,10 @@ class Controller {
      * @returns {ApplicationsFilteredListDTO | null} a list contains the filtered list according to the chosen filters.
      * It returns null if the getApplicationsByWorker() process fails.
      */
-    async getApplicationsByWorker(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, 
+    async getApplicationsByWorker(applicationId, categoryRelationId, firstname, lastname, dateOfRegistrationFrom, 
         dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {
          
-            const applicationsFilterParamsDTO = await this._createApplicationsFiltersDTO(applicationId, categoryId, firstname, lastname, 
+            const applicationsFilterParamsDTO = await this._createApplicationsFiltersDTO(applicationId, categoryRelationId, firstname, lastname, 
                 dateOfRegistrationFrom, dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId);
             const applicationsListDTO = await this.repairmentServiceDAO.getApplicationsListByWorker(applicationsFilterParamsDTO);
             return applicationsListDTO
@@ -156,11 +156,11 @@ class Controller {
      * @param {number} reparationStatusId The id of the reparation's status.
      * @returns {ApplicationsFilterParamsDTO} return a fixed ApplicationsFilterParamsDTO with acceatpable data.
      */
-    async _createApplicationsFiltersDTO(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, 
+    async _createApplicationsFiltersDTO(applicationId, categoryRelationId, firstname, lastname, dateOfRegistrationFrom, 
         dateOfRegistrationTo, suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {
             
             let requestedApplicationId = parseInt(applicationId);
-            let requestedCategoryId = parseInt(categoryId);
+            let requestedCategoryRelaionId = parseInt(categoryRelationId);
             let requestedFirstname = firstname;
             let requestedLastname = lastname;
             let requestedDateOfRegistrationFrom = dateOfRegistrationFrom;
@@ -172,8 +172,8 @@ class Controller {
             if(applicationId === 0 || applicationId === '') {
                 requestedApplicationId = filtersEmptyParameersEnum.ApplicationID;
             }
-            if(categoryId === 0 || categoryId === 0) {
-                requestedCategoryId = filtersEmptyParameersEnum.CategoryID;
+            if(categoryRelationId === 0 || categoryRelationId === '') {
+                requestedCategoryRelaionId = filtersEmptyParameersEnum.CategoryRelationID;
             }
             if(firstname === '') {
                 requestedFirstname = filtersEmptyParameersEnum.Name;
@@ -190,14 +190,14 @@ class Controller {
             if(suggestedPriceFrom === 0 || suggestedPriceFrom === ''){
                 requestedSuggestedPriceFrom = filtersEmptyParameersEnum.Price;
             }
-            if(suggestedPriceTo === 0 || suggestedPriceTo === 0) {
+            if(suggestedPriceTo === 0 || suggestedPriceTo === '') {
                 requestedSuggestedPriceTo = filtersEmptyParameersEnum.Price;
             }
-            if(reparationStatusId === 0 || reparationStatusId === 0) {
+            if(reparationStatusId === 0 || reparationStatusId === '') {
                 requestedReparationStatusId = filtersEmptyParameersEnum.ReparationStatusId;
             }
 
-            const applicationsFilterParamsDTO = new ApplicationsFilterParamsDTO(requestedApplicationId, requestedCategoryId, 
+            const applicationsFilterParamsDTO = new ApplicationsFilterParamsDTO(requestedApplicationId, requestedCategoryRelaionId, 
                 requestedFirstname, requestedLastname, requestedDateOfRegistrationFrom, requestedDateOfRegistrationTo, 
                 requestedSuggestedPriceFrom, requestedSuggestedPriceTo, requestedReparationStatusId);
             

@@ -220,8 +220,9 @@ class RepairmentServiceDAO {
     async getCategories(rootCategoryId) {
         
         const getCategoriesQuery = {
-            text: ` SELECT  category_relation.category_id,
-                            category.description,
+            text: ` SELECT  category_relation.id as category_relation_id,
+                            category_relation.category_id,
+                            category.description as category_description,
                             category_relation.parent_category_id
                     FROM    public.category_relation category_relation
                             INNER JOIN public.category category ON (category_relation.category_id = category.id)
@@ -245,8 +246,8 @@ class RepairmentServiceDAO {
             else{
                 for (let i = 0; i < categoriesResult.rowCount; i++) {
 
-                    const currentCategory = new CategoryDTO(categoriesResult.rows[i].category_id, 
-                        categoriesResult.rows[i].description, categoriesResult.rows[i].parent_category_id);
+                    const currentCategory = new CategoryDTO(categoriesResult.rows[i].category_relation_id, categoriesResult.rows[i].category_id, 
+                        categoriesResult.rows[i].category_description, categoriesResult.rows[i].parent_category_id);
 
                     returnedList[i] = currentCategory;
                     }
@@ -318,7 +319,7 @@ class RepairmentServiceDAO {
             text: `SELECT 	* 
             FROM 	public.category_relation
             WHERE 	category_id = $1`,
-            values: [NewApplicationDTO.categoryId],
+            values: [NewApplicationDTO.categoryRelationId],
         };
 
         const applicationDuplicateCheck = {
@@ -329,7 +330,7 @@ class RepairmentServiceDAO {
 					 person_id = (SELECT  person_id
                                         FROM    public.login_info
                                         WHERE   username = $3)`,
-            values: [NewApplicationDTO.problemDescription, NewApplicationDTO.categoryId, NewApplicationDTO.username],
+            values: [NewApplicationDTO.problemDescription, NewApplicationDTO.categoryRelationId, NewApplicationDTO.username],
         };
 
         const newApplicationQuery = {
@@ -344,7 +345,7 @@ class RepairmentServiceDAO {
                                         (SELECT  person_id
                                         FROM    public.login_info
                                         WHERE   username = $3)) RETURNING id`,
-            values: [NewApplicationDTO.problemDescription, NewApplicationDTO.categoryId, NewApplicationDTO.username],
+            values: [NewApplicationDTO.problemDescription, NewApplicationDTO.categoryRelationId, NewApplicationDTO.username],
         };
 
         
@@ -625,7 +626,7 @@ class RepairmentServiceDAO {
     async _getFilteredApplicationsList(applicationsFilterParamsDTO) {
         try {
             let applicationId = applicationsFilterParamsDTO.applicationId;
-            let categoryId = applicationsFilterParamsDTO.categoryId;
+            let categoryRelationId = applicationsFilterParamsDTO.categoryRelationId;
             let firstname = applicationsFilterParamsDTO.firstname;
             let lastname = applicationsFilterParamsDTO.lastname;
             let dateOfRegistrationFrom = applicationsFilterParamsDTO.dateOfRegistrationFrom;
@@ -637,8 +638,8 @@ class RepairmentServiceDAO {
             if( applicationId === filtersEmptyParameersEnum.ApplicationID) {
                 applicationId = -1;
             }
-            if(categoryId === filtersEmptyParameersEnum.CategoryID) {
-                categoryId = -1;
+            if(categoryRelationId === filtersEmptyParameersEnum.CategoryRelationID) {
+                categoryRelationId = -1;
             }
             if(firstname === filtersEmptyParameersEnum.Name) {
                 firstname = '';
@@ -681,7 +682,7 @@ class RepairmentServiceDAO {
                                     END
                                     AND
                   CASE WHEN (($2 = -1) IS NOT TRUE) THEN
-                                      category.id = $2
+                                      category_relation.id = $2
                                     ELSE
                                       TRUE
                                     END
@@ -729,7 +730,7 @@ class RepairmentServiceDAO {
                                     END
                   AND person.role_id = $10
               ORDER BY date_of_registration DESC`,
-              values: [applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, dateOfRegistrationTo, 
+              values: [applicationId, categoryRelationId, firstname, lastname, dateOfRegistrationFrom, dateOfRegistrationTo, 
                 suggestedPriceFrom, suggestedPriceTo, reparationStatusId, repairmentServiceSystemRoles.User],
             };
 

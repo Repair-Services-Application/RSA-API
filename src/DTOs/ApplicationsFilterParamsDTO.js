@@ -19,11 +19,11 @@ class ApplicationsFilterParamsDTO{
      * @param {number} suggestedPriceTo The worker's suggested price range ends to for the applications
      * @param {number} reparationStatusId The id of the reparation's status.
      */
-    constructor(applicationId, categoryId, firstname, lastname, dateOfRegistrationFrom, dateOfRegistrationTo, 
+    constructor(applicationId, categoryRelationId, firstname, lastname, dateOfRegistrationFrom, dateOfRegistrationTo, 
         suggestedPriceFrom, suggestedPriceTo, reparationStatusId) {
 
             Validators.isNonNegativeWholeNumber(applicationId, 'Application Id');
-            Validators.isNonNegativeWholeNumber(categoryId, 'Category Id');
+            Validators.isNonNegativeWholeNumber(categoryRelationId, 'Category Id');
             Validators.isAlphaString(firstname, 'First name');
             Validators.isAlphaString(lastname, 'Last name');
             Validators.isDateFormat(dateOfRegistrationFrom, 'Date of registration from');
@@ -33,7 +33,7 @@ class ApplicationsFilterParamsDTO{
             Validators.isNonNegativeWholeNumber(reparationStatusId, 'Reparation Status Id');
             
             this.applicationId = applicationId;
-            this.categoryId = categoryId;
+            this.categoryRelationId = categoryRelationId;
             this.firstname = firstname;
             this.lastname = lastname;
             this.dateOfRegistrationFrom = dateOfRegistrationFrom;
