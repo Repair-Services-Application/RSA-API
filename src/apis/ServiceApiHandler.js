@@ -89,7 +89,7 @@ class ServiceApiHandler extends ReqHandler {
                         else {
                             const getReparationStatusList = await this.controller.getReparationStatusList();
                             if (getReparationStatusList === null) {
-                                throw new Error('Expected Category list, received null.');
+                                throw new Error('Expected Reparaion status list, received null.');
                             }
                             this.sendHTTPResponse(response, 200, getReparationStatusList);
                             return;
@@ -118,8 +118,8 @@ class ServiceApiHandler extends ReqHandler {
              */
             this.reqRouter.post(
                 '/registerApplication', 
-                check('categoryId').custom((value) => {
-                    Validators.isPositiveWholeNumber(value, 'categoryId');
+                check('categoryRelationId').custom((value) => {
+                    Validators.isPositiveWholeNumber(value, 'category Relation Id');
                     return true;
                 }),
                 check('problemDescription').custom((value) => {
@@ -144,7 +144,7 @@ class ServiceApiHandler extends ReqHandler {
                         }
                         else{
                             const applicationRegistrationDTO = await this.controller.registerApplication(userDTO, 
-                                request.body.categoryId, request.body.problemDescription);
+                                request.body.categoryRelationId, request.body.problemDescription);
                         
                             if(applicationRegistrationDTO === null) {
                                 throw new Error('Expected ApplicationRegistrationDTO object, received null.');
@@ -209,8 +209,8 @@ class ServiceApiHandler extends ReqHandler {
                     Validators.isNonNegativeWholeNumber(value, 'applicationId');
                     return true;
                 }),
-                check('categoryId').custom((value) => {
-                    Validators.isNonNegativeWholeNumber(value, 'categoryId');
+                check('categoryRelationId').custom((value) => {
+                    Validators.isNonNegativeWholeNumber(value, 'categoryRelationId');
                     return true;
                 }),
                 check('firstname').custom((value) => {
@@ -274,7 +274,7 @@ class ServiceApiHandler extends ReqHandler {
                         }
                         else {
                             const ApplicationsFilteredListDTO = await this.controller.getApplicationsByWorker(request.query.applicationId, 
-                                request.query.categoryId, request.query.firstname ,request.query.lastname , request.query.dateOfRegistrationFrom, 
+                                request.query.categoryRelationId, request.query.firstname ,request.query.lastname , request.query.dateOfRegistrationFrom, 
                                 request.query.dateOfRegistrationTo, request.query.suggestedPriceFrom, request.query.suggestedPriceTo, 
                                 request.query.reparationStatusId);
                             if(ApplicationsFilteredListDTO === null) {

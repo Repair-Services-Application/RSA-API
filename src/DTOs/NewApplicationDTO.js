@@ -10,16 +10,16 @@ class NewApplicationDTO {
     /**
      * Constructs an instance of {NewApplicationDTO} object, with the passed paramters data.
      * @param {string} username The logged in user's username.
-     * @param {number} categoryId The specified categoryId for the application.
+     * @param {number} categoryRelationId The specified categoryRelationId for the application.
      * @param {string} problemDescription The application's problem description.
      */
-    constructor(username, categoryId, problemDescription) {
+    constructor(username, categoryRelationId, problemDescription) {
         Validators.isAlphanumericString(username, 'Username');
-        Validators.isPositiveWholeNumber(categoryId, 'Category id');
+        Validators.isPositiveWholeNumber(categoryRelationId, 'category Relation Id');
         Validators.isNotEmpty(problemDescription, 'Problem description');
 
         this.username = username;
-        this.categoryId = categoryId;
+        this.categoryRelationId = categoryRelationId;
         this.problemDescription = problemDescription;
     }
     
