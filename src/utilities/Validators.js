@@ -158,7 +158,7 @@ class Validators {
      * @throws {AssertionError} If validation fails.
      */
     static isDescriptionString(value, varName) {
-        const result = validator.isAlpha(value.toString(), ['sv-SE'], {ignore: ' '});
+        const result = validator.isAlpha(value.toString(), ['sv-SE'], {ignore: ' .,'});
         assert(
             result,
             `${varName} must consist of letters that could be separated by spaces.`,
