@@ -32,7 +32,7 @@ class RepairmentServiceDAO {
         const idOfDateObject = 1082;
         const defaultRawParser = (value) => value;
         types.setTypeParser(idOfDateObject, defaultRawParser);
-
+        
         this.client = new Client({
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
@@ -40,8 +40,8 @@ class RepairmentServiceDAO {
             password: process.env.DB_PASS,
             port: process.env.DB_PORT,
             connectionTimeoutMillis: 6000,
-            statement_timeout: 2000,
-            query_timeout: 2000,
+            statement_timeout: 4000,
+            query_timeout: 4000,
             //ssl: {rejectUnauthorized: false},
             
         });
