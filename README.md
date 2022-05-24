@@ -5,6 +5,7 @@ The Repair-Services-Application-API that will be the back-end of the application
 The following tools are used to accomplish the goal of this project:
 - Code and Version control (Git / Github desktop).
 - JavaScript runtime environment (Node.js).
+- Project and package management (npm). 
 - Automatic server restart if any file cahnges occurs (nodemon).
 - Code editor (Visual Studio Code).
 - Static analysis (ESLint).
