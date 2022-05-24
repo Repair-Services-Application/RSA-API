@@ -6,7 +6,7 @@ The following tools are used to accomplish the goal of this project:
 - Code and Version control (Git / Github desktop).
 - JavaScript runtime environment (Node.js).
 - Project and package management (npm). 
-- Automatic server restart if any file cahnges occurs (nodemon).
+- Automatic server restart if any changes occurs on the project files (nodemon).
 - Code editor (Visual Studio Code).
 - Static analysis (ESLint).
 - HTTP APIs desigining tool (Insomnia).
@@ -54,10 +54,10 @@ For this project, Heroku platform has been chosen for the deployment, but other 
 4. Login to your Heroku account using the command `heroku login`.
 5. A new browser window will open to login to your account.
 6. Go to the installed project path (`RSA-API` instance that has been downloaded earlier in step 2).
-7. Create a Git init file (Initialization) using `git init`.
+7. Create a Git init folder (Initialization) using `git init`.
 8. Create a "Procfile" file and write in it `web: node src/server.js` and save the changes.
 9. Delete the .gitignore file or modify it, so it let uploading the .env file
-10. The file ".env" should be field with required data (VERY IMPORTANT TO HAVE CORRECT DATA IN IT).
+10. The file ".env" should be field with required data (VERY IMPORTANT TO FILL IT WITH THE CORRECT DATA).
 11. Configure the git configuration using the commands: `git config user.email "email"`,  `git config user.name "name"` where email and name are the heroku account owner's name and email.
 12. Add the git files to the Git repository using `git add .`
 13. Commit the changes to the Github repository using `git commit -m "Initial commit."`
